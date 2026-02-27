@@ -106,10 +106,19 @@ Just use unit `()` if you don't need a facet of this. For example,
 -}
 
 import Internal.Optics as O exposing (Lens, Optional, Prism)
-import Triple.Extra as Triple
 import Maybe.Extra
+import Triple.Extra as Triple
 
 
+{-| A Reader Writer State monad stack. This stack cannot fail. Useful for pure computations that need configuration, logging, and mutable state—such as interpreters or parsers.
+
+  - The "Reader" part lets you thread configuration through computations. It is like functional dependency injection with the configuration applied LAST.
+  - The "Writer" part lets you thread logging through computations. You `tell` to log.
+  - The "State" part lets you thread state through computations.
+
+Use RWS when you never need to fail; use `Stax.RWSE` when you need fail-fast error handling.
+
+-}
 type RWS config log state a
     = RWS (config -> state -> ( state, List log, a ))
 

@@ -129,11 +129,21 @@ Just use unit `()` if you don't need a facet of this. For example,
 -}
 
 import Internal.Optics as O exposing (Lens, Optional, Prism)
-import Triple.Extra as Triple
 import Maybe.Extra
 import Result.Extra
+import Triple.Extra as Triple
 
 
+{-| A Reader Writer State Except monad stack. Useful when pure computations can fail—interpreters, parsers, compilers.
+
+  - The "Reader" part lets you thread configuration through computations (e.g., compiler flags). It is like functional dependency injection with the configuration applied LAST.
+  - The "Writer" part lets you thread logging through computations. You `tell` to log; messages are read at the end.
+  - The "State" part lets you thread state through computations (e.g., variable aliases when unifying, symbols encountered).
+  - The "Except" part gives you fail-fast semantics. It is based on `Result` but the API gives you `throw`, `catch`, and `try` which looks like imperative programming.
+
+Use RWSE over RWS when you need fail-fast error handling.
+
+-}
 type RWSE config log state error a
     = RWSE (config -> state -> ( state, List log, Result error a ))
 
