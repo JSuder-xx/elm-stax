@@ -1,0 +1,16 @@
+{
+  "name": "jsuder-xx/elm-stax",
+  "version": "1.0.0",
+  "description": "Concrete implementation of common Monad Stacks in Elm.",
+  "private": true,
+  "scripts": {
+    "test": "elm-test"
+  },
+  "author": "John J. Suder",
+  "license": "MIT",
+  "devDependencies": {
+    "elm": "^0.19.1-6",
+    "elm-format": "^0.8.8",
+    "elm-test": "0.19.1-revision12"
+  }
+}

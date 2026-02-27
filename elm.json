@@ -1,0 +1,19 @@
+{
+    "type": "package",
+    "name": "jsuder-xx/elm-stax",
+    "summary": "Concrete implementation of common Monad Stacks.",
+    "license": "MIT",
+    "version": "1.0.0",
+    "exposed-modules": [
+        "Stax.RWSE",
+        "Stax.RWS"
+    ],
+    "elm-version": "0.19.1 <= v < 0.20.0",
+    "dependencies": {
+        "elm/core": "1.0.5 <= v < 1.1.0",
+        "elmcraft/core-extra": "2.1.0 <= v < 3.0.0"
+    },
+    "test-dependencies": {
+        "elm-explorations/test": "2.2.1 <= v < 3.0.0"
+    }
+}

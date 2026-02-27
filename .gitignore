@@ -1,3 +1,8 @@
+# Node.js
+node_modules
+package-lock.json
+
+# Elm
 # elm-package generated files
 elm-stuff
 # elm-repl generated files
