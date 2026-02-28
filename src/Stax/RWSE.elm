@@ -10,7 +10,7 @@ module Stax.RWSE exposing
     , askGet
     )
 
-{-| A Reader Writer State Except monad stack. Useful when pure computations can fail—interpreters, parsers, compilers.
+{-| A Reader Writer State Except monad stack. Useful when pure computations can fail—interpreters, compilers.
 
   - The "Reader" part lets you thread configuration through computations (e.g., compiler flags). It is like functional dependency injection with the configuration applied LAST.
   - The "Writer" part lets you thread logging through computations. You `tell` to log; messages are read at the end.
@@ -129,12 +129,12 @@ Just use unit `()` if you don't need a facet of this. For example,
 -}
 
 import Internal.Optics as O exposing (Lens, Optional, Prism)
-import Maybe.Extra
-import Result.Extra
+import Maybe.Extra as Maybe
+import Result.Extra as Result
 import Triple.Extra as Triple
 
 
-{-| A Reader Writer State Except monad stack. Useful when pure computations can fail—interpreters, parsers, compilers.
+{-| A Reader Writer State Except monad stack. Useful when pure computations can fail—interpreters, compilers.
 
   - The "Reader" part lets you thread configuration through computations (e.g., compiler flags). It is like functional dependency injection with the configuration applied LAST.
   - The "Writer" part lets you thread logging through computations. You `tell` to log; messages are read at the end.
@@ -185,7 +185,7 @@ pure a =
 -}
 fromResult : Result error a -> RWSE config log state error a
 fromResult =
-    Result.Extra.unpack throw pure
+    Result.unpack throw pure
 
 
 {-| No-op. Useful with `andThen_` when you need a unit-producing computation.
@@ -403,7 +403,7 @@ when condition whenTrue =
 -}
 whenJust : Maybe a -> (a -> RWSE config log state error ()) -> RWSE config log state error ()
 whenJust a_ just =
-    Maybe.Extra.unwrap doNothing just a_
+    Maybe.unwrap doNothing just a_
 
 
 {-| Execute a computation only when the Result is Ok.
@@ -451,7 +451,7 @@ catch errorCatch (RWSE inner) =
                     inner config state
             in
             aResult
-                |> Result.Extra.unpack
+                |> Result.unpack
                     (\error -> run (errorCatch error) config s1 |> Triple.mapSecond (List.append w1))
                     (\a -> ( s1, w1, Ok a ))
         )
@@ -616,7 +616,7 @@ liftStateOptional onNoMatch optional child =
     RWSE <|
         \config parentState ->
             optional.getOption parentState
-                |> Maybe.Extra.unpack
+                |> Maybe.unpack
                     (\_ -> run onNoMatch config parentState)
                     (run child config >> Triple.mapFirst (O.andSet optional parentState))
 
@@ -628,6 +628,6 @@ liftStatePrism onNoMatch optional child =
     RWSE <|
         \config parentState ->
             optional.getOption parentState
-                |> Maybe.Extra.unpack
+                |> Maybe.unpack
                     (\_ -> run onNoMatch config parentState)
                     (run child config >> Triple.mapFirst optional.reverseGet)

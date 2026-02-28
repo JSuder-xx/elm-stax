@@ -9,7 +9,7 @@ module Stax.RWS exposing
     , liftStateLens, liftStateOptional, liftStatePrism, ignore
     )
 
-{-| A Reader Writer State monad stack. This stack cannot fail. Useful for pure computations that need configuration, logging, and mutable state—such as interpreters or parsers.
+{-| A Reader Writer State monad stack. This stack cannot fail. Useful for pure computations that need configuration, logging, and mutable state—such as interpreters.
 
   - The "Reader" part lets you thread configuration through computations. It is like functional dependency injection with the configuration applied LAST.
   - The "Writer" part lets you thread logging through computations. You `tell` to log.
@@ -106,11 +106,11 @@ Just use unit `()` if you don't need a facet of this. For example,
 -}
 
 import Internal.Optics as O exposing (Lens, Optional, Prism)
-import Maybe.Extra
+import Maybe.Extra as Maybe
 import Triple.Extra as Triple
 
 
-{-| A Reader Writer State monad stack. This stack cannot fail. Useful for pure computations that need configuration, logging, and mutable state—such as interpreters or parsers.
+{-| A Reader Writer State monad stack. This stack cannot fail. Useful for pure computations that need configuration, logging, and mutable state—such as interpreters.
 
   - The "Reader" part lets you thread configuration through computations. It is like functional dependency injection with the configuration applied LAST.
   - The "Writer" part lets you thread logging through computations. You `tell` to log.
@@ -339,7 +339,7 @@ when condition whenTrue =
 -}
 whenJust : Maybe a -> (a -> RWS config log state ()) -> RWS config log state ()
 whenJust a_ just =
-    Maybe.Extra.unwrap doNothing just a_
+    Maybe.unwrap doNothing just a_
 
 
 {-| Execute a computation only when the Result is Ok.
@@ -479,7 +479,7 @@ liftStateOptional onNoMatch optional child =
     RWS <|
         \config parentState ->
             optional.getOption parentState
-                |> Maybe.Extra.unpack
+                |> Maybe.unpack
                     (\_ -> run onNoMatch config parentState)
                     (run child config >> Triple.mapFirst (O.andSet optional parentState))
 
@@ -491,6 +491,6 @@ liftStatePrism onNoMatch prism child =
     RWS <|
         \config parentState ->
             prism.getOption parentState
-                |> Maybe.Extra.unpack
+                |> Maybe.unpack
                     (\_ -> run onNoMatch config parentState)
                     (run child config >> Triple.mapFirst prism.reverseGet)

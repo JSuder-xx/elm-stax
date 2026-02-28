@@ -1,11 +1,24 @@
 # Stax — Monad Stacks for Elm
 
-Pure RWS and RWSE monad stacks for Elm. Thread configuration (Reader), logging (Writer), and state through computations—with optional fail-fast error handling (Except) in RWSE. Useful for interpreters, parsers, compilers, and other pure computations that need config, mutable state, and logging while producing a value.
+Pure RWS and RWSE monad stacks for Elm. Thread configuration (Reader), logging (Writer), and state through computations—with optional fail-fast error handling (Except) in RWSE. Useful for interpreters, compilers, and other pure computations that need config, mutable state, and logging while producing a value.
 
 ## When to Use
 
 - **Stax.RWS**: Use when your computation never needs to fail. Reader + Writer + State.
 - **Stax.RWSE**: Use when you need fail-fast error handling. Reader + Writer + State + Except.
+
+## Representing ReaderT, WriterT, StateT, ExceptT, MaybeT
+
+These two stacks cover common combinations of ReaderT, WriterT, StateT, ExceptT, and MaybeT:
+
+- **Choose RWSE** if you need ExceptT or MaybeT (i.e., any fail-fast semantics). Otherwise use **RWS**.
+- Use the unit type `()` for any facet you don’t need:
+  - `RWS () log state a` — no Reader
+  - `RWS config () state a` — no Writer
+  - `RWS config log () a` — no State
+  - The same applies in RWSE for config, log, and state.
+
+For MaybeT-style behavior (failure with no error payload), use **RWSE with `()` in the error position**: `RWSE config log state () a`. `Err ()` plays the role of `Nothing` and `Ok a` the role of `Just a`.
 
 ## Example
 
