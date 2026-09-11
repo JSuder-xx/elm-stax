@@ -3,7 +3,7 @@
     "name": "jsuder-xx/elm-stax",
     "summary": "Concrete implementation of common Monad Stacks.",
     "license": "MIT",
-    "version": "1.0.1",
+    "version": "2.0.0",
     "exposed-modules": [
         "Stax.RWSE",
         "Stax.RWS"
