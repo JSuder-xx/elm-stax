@@ -226,7 +226,7 @@ map5 f a b c d e =
 -}
 andMap : RWS config log state a -> RWS config log state (a -> b) -> RWS config log state b
 andMap aM abM =
-    aM |> andThen (\a -> map ((|>) a) abM)
+    abM |> andThen (\ab -> aM |> map ab)
 
 
 {-| Iterate over a list with an accumulator. Like `List.foldl` but the step runs in the stack (config, state, logging).

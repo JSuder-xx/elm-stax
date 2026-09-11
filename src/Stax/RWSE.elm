@@ -272,7 +272,7 @@ map5 f a b c d e =
 -}
 andMap : RWSE config log state error a -> RWSE config log state error (a -> b) -> RWSE config log state error b
 andMap aM abM =
-    aM |> andThen (\a -> map ((|>) a) abM)
+    abM |> andThen (\ab -> aM |> map ab)
 
 
 {-| Iterate over a list with an accumulator. Like `List.foldl` but the step runs in the stack (config, state, logging, fail-fast).

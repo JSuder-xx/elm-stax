@@ -4,6 +4,7 @@ import Expect
 import Shared exposing (..)
 import Stax.RWS as S exposing (RWS)
 import Test exposing (..)
+import Triple.Extra exposing (triple)
 
 
 type alias Stack a =
@@ -41,6 +42,9 @@ suite =
 
         add1ToCount =
             updateCount <| (+) 1
+
+        inc =
+            add1ToCount |> S.andThen_ S.get
     in
     describe "RWS"
         [ scenario "pure returns the value given"
@@ -65,6 +69,16 @@ suite =
             , scenario "map2 lifts a two-argument function"
                 [ { given = S.map2 Tuple.pair S.ask S.get
                   , expect = ( initialState, [], ( config, initialState ) )
+                  }
+                ]
+            , scenario "map2 runs stateful computations left-to-right"
+                [ { given = S.map2 Tuple.pair inc inc
+                  , expect = ( { count = 2 }, [], ( { count = 1 }, { count = 2 } ) )
+                  }
+                ]
+            , scenario "map3 runs stateful computations left-to-right"
+                [ { given = S.map3 triple inc inc inc
+                  , expect = ( { count = 3 }, [], ( { count = 1 }, { count = 2 }, { count = 3 } ) )
                   }
                 ]
             ]
