@@ -6,7 +6,7 @@ module Stax.RWS exposing
     , tell, andTell, tellSingle
     , get, gets, modify, put, andModify
     , askGet
-    , liftStateLens, liftStateOptional, liftStatePrism, ignore
+    , ignore
     )
 
 {-| A Reader Writer State monad stack. This stack cannot fail. Useful for pure computations that need configuration, logging, and mutable state—such as interpreters.
@@ -101,11 +101,10 @@ Just use unit `()` if you don't need a facet of this. For example,
 
 ### Transformations
 
-@docs liftStateLens, liftStateOptional, liftStatePrism, ignore
+@docs ignore
 
 -}
 
-import Internal.Optics as O exposing (Lens, Optional, Prism)
 import Maybe.Extra as Maybe
 import Triple.Extra as Triple
 
@@ -459,38 +458,3 @@ asks f =
 askGet : RWS config log state ( config, state )
 askGet =
     map2 Tuple.pair ask get
-
-
-{-| Lift a computation that works on a child state to work on a parent state. Accepts record-shaped optics compatible with [Monocle](https://package.elm-lang.org/packages/arturopala/elm-monocle/latest/); Elm's structural typing means any record with `get : parent -> child` and `set : child -> parent -> parent` works.
-
-    lens = { get = .count, set = \v s -> { s | count = v } }
-    liftStateLens lens (modify ((+) 1))
-
--}
-liftStateLens : Lens parentState childState -> RWS config log childState a -> RWS config log parentState a
-liftStateLens lens child =
-    RWS <| \config parentState -> run child config (lens.get parentState) |> Triple.mapFirst (O.andSet lens parentState)
-
-
-{-| Lift a computation to work on a parent state when the child may be missing (Optional/AffineTraversal). The first argument runs if the child is missing; it uses the parent state.
--}
-liftStateOptional : RWS config log parentState a -> Optional parentState childCaseState -> RWS config log childCaseState a -> RWS config log parentState a
-liftStateOptional onNoMatch optional child =
-    RWS <|
-        \config parentState ->
-            optional.getOption parentState
-                |> Maybe.unpack
-                    (\_ -> run onNoMatch config parentState)
-                    (run child config >> Triple.mapFirst (O.andSet optional parentState))
-
-
-{-| Lift a computation to work on a custom type when focusing on one constructor via a Prism. The first argument runs if the constructor does not match.
--}
-liftStatePrism : RWS config log customType a -> Prism customType constructorInfo -> RWS config log constructorInfo a -> RWS config log customType a
-liftStatePrism onNoMatch prism child =
-    RWS <|
-        \config parentState ->
-            prism.getOption parentState
-                |> Maybe.unpack
-                    (\_ -> run onNoMatch config parentState)
-                    (run child config >> Triple.mapFirst prism.reverseGet)

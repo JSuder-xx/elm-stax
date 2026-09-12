@@ -228,66 +228,6 @@ suite =
                   }
                 ]
             ]
-        , describe "Transform"
-            [ test "liftStateLens runs child computation and updates parent" <|
-                \_ ->
-                    let
-                        parentState : Parent
-                        parentState =
-                            { child = { n = 0 } }
-
-                        stack : RWS Config LogEntry Parent ()
-                        stack =
-                            S.liftStateLens childOfParent (S.modify (\c -> { c | n = c.n + 1 }))
-                    in
-                    S.runWith config parentState stack
-                        |> Expect.equal ( { child = { n = 1 } }, [], () )
-            , test "liftStateOptional runs child when present, onNoMatch otherwise" <|
-                \_ ->
-                    let
-                        parentWithChild : IndecisiveParent
-                        parentWithChild =
-                            { maybeChild = Just { n = 5 } }
-
-                        parentWithoutChild : IndecisiveParent
-                        parentWithoutChild =
-                            { maybeChild = Nothing }
-
-                        stack : RWS Config LogEntry IndecisiveParent ()
-                        stack =
-                            S.liftStateOptional
-                                (S.modify (\p -> { p | maybeChild = Just { n = 99 } }))
-                                childOfIndecisiveParent
-                                (S.modify (\c -> { c | n = c.n + 1 }))
-                    in
-                    Expect.all
-                        [ \_ -> S.runWith config parentWithChild stack |> Expect.equal ( { maybeChild = Just { n = 6 } }, [], () )
-                        , \_ -> S.runWith config parentWithoutChild stack |> Expect.equal ( { maybeChild = Just { n = 99 } }, [], () )
-                        ]
-                        ()
-            , test "liftStatePrism runs child when constructor matches, onNoMatch otherwise" <|
-                \_ ->
-                    let
-                        stackMatch : RWS Config LogEntry AOrB Int
-                        stackMatch =
-                            S.liftStatePrism
-                                (S.pure 0)
-                                aOfAOrB
-                                (S.modify (\n -> n + 10) |> S.andThen_ S.get |> S.andThen (\n -> S.pure (n + 1)))
-
-                        stackNoMatch : RWS Config LogEntry AOrB Int
-                        stackNoMatch =
-                            S.liftStatePrism
-                                (S.tell [ "no match" ] |> S.andThen_ (S.pure 42))
-                                aOfAOrB
-                                (S.pure 0)
-                    in
-                    Expect.all
-                        [ \_ -> S.runWith config (A 3) stackMatch |> Expect.equal ( A 13, [], 14 )
-                        , \_ -> S.runWith config B stackNoMatch |> Expect.equal ( B, [ "no match" ], 42 )
-                        ]
-                        ()
-            ]
         , describe "Foldable"
             [ describe "foldM"
                 [ scenario "can be used to build a list"

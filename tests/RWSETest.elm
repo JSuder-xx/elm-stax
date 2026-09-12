@@ -301,64 +301,6 @@ suite =
                   , expect = ( initialState, [], Err (BigDeal "42") )
                   }
                 ]
-            , test "liftStateLens runs child computation and updates parent" <|
-                \_ ->
-                    let
-                        parentState : Parent
-                        parentState =
-                            { child = { n = 0 } }
-
-                        stack : RWSE Config LogEntry Parent Error ()
-                        stack =
-                            S.liftStateLens childOfParent (S.modify (\c -> { c | n = c.n + 1 }))
-                    in
-                    S.runWith config parentState stack
-                        |> Expect.equal ( { child = { n = 1 } }, [], Ok () )
-            , test "liftStateOptional runs child when present, onNoMatch otherwise" <|
-                \_ ->
-                    let
-                        parentWithChild : IndecisiveParent
-                        parentWithChild =
-                            { maybeChild = Just { n = 5 } }
-
-                        parentWithoutChild : IndecisiveParent
-                        parentWithoutChild =
-                            { maybeChild = Nothing }
-
-                        stack : RWSE Config LogEntry IndecisiveParent Error ()
-                        stack =
-                            S.liftStateOptional
-                                (S.modify (\p -> { p | maybeChild = Just { n = 99 } }))
-                                childOfIndecisiveParent
-                                (S.modify (\c -> { c | n = c.n + 1 }))
-                    in
-                    Expect.all
-                        [ \_ -> S.runWith config parentWithChild stack |> Expect.equal ( { maybeChild = Just { n = 6 } }, [], Ok () )
-                        , \_ -> S.runWith config parentWithoutChild stack |> Expect.equal ( { maybeChild = Just { n = 99 } }, [], Ok () )
-                        ]
-                        ()
-            , test "liftStatePrism runs child when constructor matches, onNoMatch otherwise" <|
-                \_ ->
-                    let
-                        stackMatch : RWSE Config LogEntry AOrB Error Int
-                        stackMatch =
-                            S.liftStatePrism
-                                (S.pure 0)
-                                aOfAOrB
-                                (S.modify (\n -> n + 10) |> S.andThen_ S.get |> S.andThen (\n -> S.pure (n + 1)))
-
-                        stackNoMatch : RWSE Config LogEntry AOrB Error Int
-                        stackNoMatch =
-                            S.liftStatePrism
-                                (S.tell [ "no match" ] |> S.andThen_ (S.pure 42))
-                                aOfAOrB
-                                (S.pure 0)
-                    in
-                    Expect.all
-                        [ \_ -> S.runWith config (A 3) stackMatch |> Expect.equal ( A 13, [], Ok 14 )
-                        , \_ -> S.runWith config B stackNoMatch |> Expect.equal ( B, [ "no match" ], Ok 42 )
-                        ]
-                        ()
             ]
         , describe "Foldable"
             [ describe "foldM"

@@ -6,7 +6,7 @@ module Stax.RWSE exposing
     , tell, andTell, tellSingle
     , get, modify, put, andModify
     , catch, throw, try
-    , liftStateLens, liftStateOptional, liftStatePrism, mapError, ignore
+    , mapError, ignore
     , askGet
     )
 
@@ -119,7 +119,7 @@ Just use unit `()` if you don't need a facet of this. For example,
 
 ### Transformations
 
-@docs liftStateLens, liftStateOptional, liftStatePrism, mapError, ignore
+@docs mapError, ignore
 
 
 ### Miscellaneous
@@ -128,7 +128,6 @@ Just use unit `()` if you don't need a facet of this. For example,
 
 -}
 
-import Internal.Optics as O exposing (Lens, Optional, Prism)
 import Maybe.Extra as Maybe
 import Result.Extra as Result
 import Triple.Extra as Triple
@@ -596,38 +595,3 @@ asks f =
 mapError : (ea -> eb) -> RWSE config log state ea a -> RWSE config log state eb a
 mapError f (RWSE inner) =
     RWSE <| \config state -> inner config state |> Triple.mapThird (Result.mapError f)
-
-
-{-| Lift a computation that works on a child state to work on a parent state. Accepts record-shaped optics compatible with [Monocle](https://package.elm-lang.org/packages/arturopala/elm-monocle/latest/); Elm's structural typing means any record with `get : parent -> child` and `set : child -> parent -> parent` works.
-
-    lens = { get = .count, set = \v s -> { s | count = v } }
-    liftStateLens lens (modify ((+) 1))
-
--}
-liftStateLens : Lens parentState childState -> RWSE config log childState error a -> RWSE config log parentState error a
-liftStateLens lens child =
-    RWSE <| \config parentState -> run child config (lens.get parentState) |> Triple.mapFirst (O.andSet lens parentState)
-
-
-{-| Lift a computation to work on a parent state when the child may be missing (Optional/AffineTraversal). The first argument runs if the child is missing; it uses the parent state.
--}
-liftStateOptional : RWSE config log parentState error a -> Optional parentState childCaseState -> RWSE config log childCaseState error a -> RWSE config log parentState error a
-liftStateOptional onNoMatch optional child =
-    RWSE <|
-        \config parentState ->
-            optional.getOption parentState
-                |> Maybe.unpack
-                    (\_ -> run onNoMatch config parentState)
-                    (run child config >> Triple.mapFirst (O.andSet optional parentState))
-
-
-{-| Lift a computation to work on a custom type when focusing on one constructor via a Prism. The first argument runs if the constructor does not match.
--}
-liftStatePrism : RWSE config log customType error a -> Prism customType constructorInfo -> RWSE config log constructorInfo error a -> RWSE config log customType error a
-liftStatePrism onNoMatch optional child =
-    RWSE <|
-        \config parentState ->
-            optional.getOption parentState
-                |> Maybe.unpack
-                    (\_ -> run onNoMatch config parentState)
-                    (run child config >> Triple.mapFirst optional.reverseGet)
